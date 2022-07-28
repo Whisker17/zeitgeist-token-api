@@ -1,9 +1,11 @@
 import { ApiPromise, WsProvider } from '@polkadot/api';
-import { u128 } from '@polkadot/types';
+import { u128, Option } from '@polkadot/types';
 import { PalletBalancesAccountData } from '@polkadot/types/lookup';
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { ISubmittableResult } from '@polkadot/types/types';
 import { networks } from '../const';
+import BN from 'bn.js';
+import { EraRewardAndStake } from '../types/dappStaking';
 
 export type Transaction = SubmittableExtrinsic<'promise', ISubmittableResult>;
 
@@ -12,6 +14,7 @@ export interface IZeitgeistApi {
     getBalances(addresses: string[]): Promise<PalletBalancesAccountData[]>;
     getChainDecimals(): Promise<number>;
     getChainName(): Promise<string>;
+    getTvl(): Promise<BN>;
 }
 
 export class BaseApi implements IZeitgeistApi {
@@ -43,6 +46,13 @@ export class BaseApi implements IZeitgeistApi {
         await this.connect();
 
         return (await this._api.rpc.system.chain()).toString();
+    }
+
+    public async getTvl(): Promise<BN> {
+        const era = await this._api.query.dappsStaking.currentEra();
+        const result = await this._api.query.dappsStaking.eraRewardsAndStakes<Option<EraRewardAndStake>>(era);
+        const tvl = result.unwrap().staked;
+        return tvl;
     }
 
     protected async connect(index?: number): Promise<ApiPromise> {
