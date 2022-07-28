@@ -3,7 +3,7 @@ export const ContainerTypes = {
     StatsService: 'StatsService',
     Api: 'Api',
     ApiFactory: 'ApiFactory',
-    DappsStakingService: 'DappsStakingService',
+    StakingService: 'StakingService',
     StatsIndexerService: 'StatsIndexerService',
     PriceProvider: 'PriceProvider',
     PriceProviderWithFailover: 'PriceProviderWithFailover',

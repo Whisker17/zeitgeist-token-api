@@ -1,7 +1,7 @@
 import { injectable, inject } from 'inversify';
 import { aprToApy } from 'apr-tools';
 import { IApiFactory } from '../client/apiFactory';
-import { AprCalculationData } from '../models/AprCalculationData';
+import { AprStats } from '../models/aprStats';
 import { networks } from '../const';
 import { defaultAmountWithDecimals, getSubscanOption } from '../utils';
 import axios from 'axios';
@@ -67,7 +67,7 @@ export class StakingService implements IStakingService {
         }
     }
 
-    private getAverageBlocksPerMins(chainId: string, data: AprCalculationData): number {
+    private getAverageBlocksPerMins(chainId: string, data: AprStats): number {
         const currentTs = Math.floor(data.timeStamp.toNumber() / 1000);
         const minsChainRunning = (currentTs - TS_FIRST_BLOCK[chainId]) / 60;
         const avgBlocksPerMin = data.latestBlock.toNumber() / minsChainRunning;

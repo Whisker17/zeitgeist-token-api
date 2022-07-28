@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { injectable, inject } from 'inversify';
 import { ContainerTypes } from '../containertypes';
-import { IDappsStakingService } from '../services/stakingService';
+import { IStakingService } from '../services/stakingService';
 import { IStatsIndexerService, PeriodType } from '../services/statsIndexer';
 import { ControllerBase } from './controllerBase';
 import { IControllerBase } from './iControllerBase';
@@ -10,7 +10,7 @@ import { IControllerBase } from './iControllerBase';
 @injectable()
 export class StakingController extends ControllerBase implements IControllerBase {
     constructor(
-        @inject(ContainerTypes.DappsStakingService) private _stakingService: IDappsStakingService,
+        @inject(ContainerTypes.DappsStakingService) private _stakingService: IStakingService,
         @inject(ContainerTypes.StatsIndexerService) private _indexerService: IStatsIndexerService,
     ) {
         super();

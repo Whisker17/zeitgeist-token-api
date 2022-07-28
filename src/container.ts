@@ -15,6 +15,7 @@ import { ZeitgeistApi } from './client/zeitgeistAPI';
 import { ContainerTypes } from './containertypes';
 import { IPriceProvider } from './services/iPriceProvider';
 import { CoinGeckoPriceProvider, PriceProviderWithFailover } from './services/priceProvider';
+import { IStakingService, StakingService } from './services/stakingService';
 
 const container = new Container();
 
@@ -29,6 +30,7 @@ container.bind<IApiFactory>(ContainerTypes.ApiFactory).to(ApiFactory).inSingleto
 container.bind<IStatsService>(ContainerTypes.StatsService).to(StatsService).inSingletonScope();
 container.bind<IStatsIndexerService>(ContainerTypes.StatsIndexerService).to(StatsIndexerService).inSingletonScope();
 container.bind<IPriceProvider>(ContainerTypes.PriceProvider).to(CoinGeckoPriceProvider).inSingletonScope();
+container.bind<IStakingService>(ContainerTypes.StakingService).to(StakingService).inSingletonScope();
 container
     .bind<IPriceProvider>(ContainerTypes.PriceProviderWithFailover)
     .to(PriceProviderWithFailover)
