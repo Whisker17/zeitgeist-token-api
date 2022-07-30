@@ -3,7 +3,7 @@ import { aprToApy } from 'apr-tools';
 import { IApiFactory } from '../client/apiFactory';
 import { AprStats } from '../models/aprStats';
 import { networks } from '../const';
-import { defaultAmountWithDecimals, getSubscanOption } from '../utils';
+import { getSubscanOption } from '../utils';
 import axios from 'axios';
 import { IZeitgeistApi, Transaction } from '../client/baseApi';
 import { ContainerTypes } from '../containertypes';
@@ -18,9 +18,7 @@ export interface IStakingService {
 // Memo: 50% of block rewards goes to dappsStaking, 50% goes to block validator
 const DAPPS_REWARD_RATE = 0.5;
 
-const TS_FIRST_BLOCK = {
-    [networks.zeitgeist.name]: 1642041546, //  Ref: 2022-01-13 02:39:06  https://zeitgeist.subscan.io/block/1
-};
+const TS_FIRST_BLOCK = 1642041546; //  Ref: 2022-01-13 02:39:06  https://zeitgeist.subscan.io/block/1
 
 @injectable()
 /**
@@ -36,18 +34,29 @@ export class StakingService implements IStakingService {
             const decimals = await api.getChainDecimals();
 
             const blockRewards = Number(defaultAmountWithDecimals(data.blockRewards, decimals));
-            const averageBlocksPerMinute = this.getAverageBlocksPerMins(data);
+            const averageBlocksPerMinute =
+                data.latestBlock.toNumber() / ((Math.floor(data.timeStamp.toNumber() / 1000) - TS_FIRST_BLOCK) / 60);
             const averageBlocksPerDay = averageBlocksPerMinute * 60 * 24;
             const dailyEraRate = averageBlocksPerDay / data.blockPerEra.toNumber();
             const eraRewards = data.blockPerEra.toNumber() * blockRewards;
             const annualRewards = eraRewards * dailyEraRate * 365.25;
 
             const tvl = await api.getTvl();
-            const totalStaked = Number(ethers.utils.formatUnits(tvl.toString(), decimals));
-            const stakerBlockReward = (1 - data.developerRewardPercentage) * DAPPS_REWARD_RATE;
-            const stakerApr = (annualRewards / totalStaked) * stakerBlockReward * 100;
 
-            return stakerApr;
+            console.log('blockRewards: ', blockRewards);
+            console.log('averageBlocksPerMinute: ', averageBlocksPerMinute);
+            console.log('averageBlocksPerDay: ', averageBlocksPerDay);
+            console.log('dailyEraRate: ', dailyEraRate);
+            console.log('eraRewards: ', eraRewards);
+            console.log('annualRewards: ', annualRewards);
+            console.log('tvl: ', tvl);
+
+            return Number(tvl.toNumber);
+            // const totalStaked = Number(ethers.utils.formatUnits(tvl.toString(), decimals));
+            // const stakerBlockReward = (1 - data.developerRewardPercentage) * DAPPS_REWARD_RATE;
+            // const stakerApr = (annualRewards / totalStaked) * stakerBlockReward * 100;
+
+            // return stakerApr;
         } catch (e) {
             console.error(e);
             throw new Error(
@@ -67,14 +76,6 @@ export class StakingService implements IStakingService {
         }
     }
 
-    private getAverageBlocksPerMins(chainId: string, data: AprStats): number {
-        const currentTs = Math.floor(data.timeStamp.toNumber() / 1000);
-        const minsChainRunning = (currentTs - TS_FIRST_BLOCK[chainId]) / 60;
-        const avgBlocksPerMin = data.latestBlock.toNumber() / minsChainRunning;
-
-        return avgBlocksPerMin;
-    }
-
     public async getEarned(address: string): Promise<number> {
         try {
             // Docs: https://support.subscan.io/#staking-api
@@ -91,7 +92,8 @@ export class StakingService implements IStakingService {
 
             if (result.data) {
                 const earned = result.data.data.sum;
-                return Number(ethers.utils.formatEther(earned));
+                return earned;
+                //return Number(ethers.utils.formatEther(earned));
             } else {
                 return 0;
             }

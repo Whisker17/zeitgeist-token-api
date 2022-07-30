@@ -1,11 +1,13 @@
 import { ApiPromise, WsProvider } from '@polkadot/api';
-import { u128, Option } from '@polkadot/types';
+import { u32, u128, Option } from '@polkadot/types';
 import { PalletBalancesAccountData } from '@polkadot/types/lookup';
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { ISubmittableResult } from '@polkadot/types/types';
+import { Header } from '@polkadot/types/interfaces';
 import { networks } from '../const';
 import BN from 'bn.js';
 import { EraRewardAndStake } from '../types/dappStaking';
+import { AprStats } from '../models/aprStats';
 
 export type Transaction = SubmittableExtrinsic<'promise', ISubmittableResult>;
 
@@ -15,6 +17,7 @@ export interface IZeitgeistApi {
     getChainDecimals(): Promise<number>;
     getChainName(): Promise<string>;
     getTvl(): Promise<BN>;
+    getAprCalculationData(): Promise<AprStats>;
 }
 
 export class BaseApi implements IZeitgeistApi {
@@ -53,6 +56,26 @@ export class BaseApi implements IZeitgeistApi {
         const result = await this._api.query.dappsStaking.eraRewardsAndStakes<Option<EraRewardAndStake>>(era);
         const tvl = result.unwrap().staked;
         return tvl;
+    }
+
+    public async getAprCalculationData(): Promise<AprStats> {
+        await this.connect();
+        const results = await Promise.all([
+            this._api.consts.blockReward.rewardAmount,
+            this._api.query.timestamp.now(),
+            this._api.rpc.chain.getHeader(),
+            this._api.consts.dappsStaking.developerRewardPercentage.toHuman(),
+            this._api.consts.dappsStaking.blockPerEra,
+        ]);
+
+        const result = new AprStats();
+        result.blockRewards = results[0] as u128;
+        result.timeStamp = results[1];
+        result.latestBlock = (results[2] as Header).number.unwrap();
+        result.developerRewardPercentage = Number(results[3]?.toString().replace('%', '')) * 0.01;
+        result.blockPerEra = results[4] as u32;
+
+        return result;
     }
 
     protected async connect(index?: number): Promise<ApiPromise> {

@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import { body, validationResult } from 'express-validator';
 import { injectable, inject } from 'inversify';
 import { ContainerTypes } from '../containertypes';
 import { IStakingService } from '../services/stakingService';
@@ -10,7 +9,7 @@ import { IControllerBase } from './iControllerBase';
 @injectable()
 export class StakingController extends ControllerBase implements IControllerBase {
     constructor(
-        @inject(ContainerTypes.DappsStakingService) private _stakingService: IStakingService,
+        @inject(ContainerTypes.StakingService) private _stakingService: IStakingService,
         @inject(ContainerTypes.StatsIndexerService) private _indexerService: IStatsIndexerService,
     ) {
         super();
@@ -43,21 +42,6 @@ export class StakingController extends ControllerBase implements IControllerBase
             } catch (err) {
                 this.handleError(res, err as Error);
             }
-        });
-
-        /**
-         * @description staking TVL route v1.
-         */
-        app.route('/api/v1/dapps-staking/tvl/:period').get(async (req: Request, res: Response) => {
-            /*
-                #swagger.description = 'Query TVL in a specific period'
-                #swagger.parameters['period'] = {
-                    in: 'path',
-                    description: 'The period type. Supported values: 7 days 30 days, 90 days, 1 year',
-                    required: true,
-                }
-            */
-            res.json(await this._indexerService.getDappStakingTvl(req.params.period as PeriodType));
         });
 
         /**
